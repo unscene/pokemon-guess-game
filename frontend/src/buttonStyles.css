@@ -1,0 +1,19 @@
+.game-btn {
+  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  font-size: 36px;
+  padding: 24px 64px;
+  border-radius: 0;
+  background: #eee;
+  border: 7px solid #aaa;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.game-btn:active {
+  background: #000;
+  color: #eee;
+}
+.game-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

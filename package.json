@@ -1,0 +1,12 @@
+{
+  "name": "pokemon-guess-game",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "devDependencies": {
+    "@types/cors": "^2.8.19"
+  }
+}
