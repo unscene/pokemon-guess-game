@@ -5,6 +5,7 @@ import { styles } from './styles.stylex';
 function SetupScreen({ onStart }) {
   const [players, setPlayers] = useState(['']);
   const [rounds, setRounds] = useState(5);
+  const [gameMode, setGameMode] = useState('guess-pokemon'); // 'guess-pokemon' or 'evolution'
 
   const handlePlayerChange = (i, val) => {
     const arr = [...players];
@@ -48,11 +49,24 @@ function SetupScreen({ onStart }) {
           />
         </label>
       </div>
+      <div {...stylex.props(styles.roundsRow)}>
+        <label {...stylex.props(styles.roundsLabel)}>
+          Game Mode:
+          <select
+            value={gameMode}
+            onChange={e => setGameMode(e.target.value)}
+            style={{ marginLeft: 12, fontSize: 18 }}
+          >
+            <option value="guess-pokemon">Guess Pokémon</option>
+            <option value="evolution">Guess Evolution</option>
+          </select>
+        </label>
+      </div>
       <button
         className="game-btn"
         {...stylex.props(styles.startBtn)}
         disabled={!canStart}
-        onClick={() => onStart(players, rounds)}
+        onClick={() => onStart(players, rounds, gameMode)}
       >
         Start Game
       </button>

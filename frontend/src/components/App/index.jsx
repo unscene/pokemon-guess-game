@@ -44,12 +44,14 @@ function App() {
 
 
 
-  const startGame = (players, rounds) => {
+  const [gameMode, setGameMode] = useState('guess-pokemon');
+  const startGame = (players, rounds, mode) => {
     setLoading(true);
+    setGameMode(mode);
     fetch('/game/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ players, rounds })
+      body: JSON.stringify({ players, rounds, gameMode: mode })
     })
       .then(r => r.json())
       .then(data => {
@@ -57,6 +59,7 @@ function App() {
         setLoading(false);
       });
   };
+
 
   if (loading) return <div style={{ fontSize: 32, textAlign: 'center', marginTop: 100 }}>Loading...</div>;
 
@@ -122,9 +125,8 @@ function App() {
 
   return (
     <div style={{ fontSize: 32, textAlign: 'center', marginTop: 20 }}>
-
       <>
-        <div style={{ marginBottom: 20, width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', background: imageBgColor, padding: '40px 0 0 0', transition: 'background 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', background: imageBgColor, padding: '40px 0 40px 0', transition: 'background 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           {/* Player Name inside colored box */}
           <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px 12px 32px' }}>
             <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 28, color: '#222', textAlign: 'left' }}>
@@ -134,67 +136,118 @@ function App() {
               Round: {gameState.currentRound} / {gameState.rounds}
             </span>
           </div>
-          <div
-            key={shakeKey}
-            style={{ position: 'relative', display: 'inline-block' }}
-            className="shake"
-          >
-            <img
+          {/* Evolution Mode: show base and evolution side-by-side when both images are present */}
+          {gameState.gameMode === 'evolution' && turnState.evolutionImageUrl ? (
+            <div
               key={shakeKey}
-              src={turnState.imageUrl}
-              alt="pokemon"
-              style={{ width: 320, height: 320, imageRendering: 'pixelated', display: 'block', margin: '0 auto' }}
-            />
-            {turnState.correct === true && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2 }}>
-                <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 42, color: '#00ff00', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2, marginRight: 32 }}>
-                  Correct!
-                </span>
-                <button onClick={nextTurn} className="game-btn" style={{ fontSize: 28, padding: '18px 32px', marginLeft: 0, border: '7px solid #00ff00', boxShadow: '2px 2px 0 #222' }}>
-                  Next Turn
-                </button>
+              style={{ position: 'relative', display: 'inline-block' }}
+              className="shake"
+            >
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
+                  {/* Base Pokémon */}
+                  <img
+                    key={shakeKey + '-base'}
+                    src={turnState.imageUrl}
+                    alt="base-pokemon"
+                    style={{ width: 320, height: 320, imageRendering: 'pixelated', display: 'block', }}
+                  />
+                  {/* Arrow */}
+                  <span style={{
+                    fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace",
+                    fontSize: 64,
+                    userSelect: 'none',
+                    color: '#222',
+                    margin: '0 16px',
+                    letterSpacing: 2,
+                    display: 'inline-block',
+                    lineHeight: 1,
+                    filter: 'none',
+                  }}>
+                    ▶
+                  </span>
+                  {/* Evolution silhouette */}
+                  <div style={{ position: 'relative', width: 320, height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img
+                      key={shakeKey + '-evo'}
+                      src={turnState.evolutionImageUrl}
+                      alt="evolution-silhouette"
+                      style={{
+                        width: 320,
+                        height: 320,
+                        imageRendering: 'pixelated',
+                        filter: turnState.correct === true ? 'none' : 'brightness(0) grayscale(1) contrast(1.5)',
+                        opacity: turnState.correct === true ? 1 : 0.92,
+                        display: 'block',
+                        margin: '0 auto',
+                        background: 'transparent'
+                      }}
+                    />
+                    {turnState.correct === true ? null : (
+                      <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 80, color: '#fff', opacity: 0.7, pointerEvents: 'none', textShadow: '2px 2px 12px #000, 0 0 18px #fff' }}>?</span>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-            {turnState.correct === false && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2, minWidth: 700, maxWidth: '90vw', justifyContent: 'center', background: 'rgba(255,255,255,0.01)' }}>
-                <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 38, color: '#ff2222', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2, marginRight: 32 }}>
-                  Out of tries! The answer was {turnState.pokemon}
-                </span>
-                <button onClick={nextTurn} className="game-btn" style={{ fontSize: 28, padding: '18px 32px', marginLeft: 0, border: '7px solid #ff2222', boxShadow: '2px 2px 0 #222' }}>
-                  Next Turn
-                </button>
-              </div>
-            )}
-          </div>
-          {/* Progress Bar for Tries */}
-          {console.log('ProgressBar: maxTries', 4, 'triesLeft', turnState.triesLeft)}
-          {/** Progress bar color is 50% darker than imageBgColor */}
-          {(() => { /* for debugging: console.log('imageBgColor', imageBgColor); */ })()}
-          <div style={{
-            width: '100vw',
-            height: 18,
-            background: imageBgColor,
-            display: 'flex'
-          }}>
-            {Array.from({ length: 3 }).map((_, i) => {
-              // Remaining tries fill from left; used tries fill to the right
-              const isRemaining = i < turnState.triesLeft;
-              const bg = isRemaining ? darkenColor(imageBgColor, 0.5) : imageBgColor;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    flex: 1,
-                    height: '100%',
-                    marginRight: i !== 3 - 1 ? 2 : 0,
-                    background: bg,
-                    transition: 'background 0.3s',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              );
-            })}
-          </div>
+          ) : (
+            <div
+              key={shakeKey}
+              style={{ position: 'relative', display: 'inline-block' }}
+              className="shake"
+            >
+              <img
+                key={shakeKey}
+                src={turnState.imageUrl}
+                alt="pokemon"
+                style={{ width: 320, height: 320, imageRendering: 'pixelated', display: 'block', margin: '0 auto' }}
+              />
+            </div>
+          )}
+          {turnState.correct === true && (
+            <div style={{ flexDirection: 'column', gap: 32, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2 }}>
+              <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 42, color: '#00ff00', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2 }}>
+                Correct!
+              </span>
+              <button onClick={nextTurn} className="game-btn" style={{ fontSize: 28, padding: '18px 32px', marginLeft: 0, border: '7px solid #00ff00', boxShadow: '2px 2px 0 #222' }}>
+                Next Turn
+              </button>
+            </div>
+          )}
+          {turnState.correct === false && (
+            <div style={{ flexDirection: 'column', gap: 32, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2, minWidth: 700, maxWidth: '90vw', justifyContent: 'center', background: 'rgba(255,255,255,0.01)' }}>
+              <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 38, color: '#ff2222', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2 }}>
+                Out of tries! The answer was {turnState.pokemon}
+              </span>
+              <button onClick={nextTurn} className="game-btn" style={{ fontSize: 28, padding: '18px 32px', marginLeft: 0, border: '7px solid #ff2222', boxShadow: '2px 2px 0 #222' }}>
+                Next Turn
+              </button>
+            </div>
+          )}
+        </div>
+         <div style={{
+          width: '100vw',
+          height: 18,
+          background: imageBgColor,
+          display: 'flex',
+          marginBottom: 20,
+        }}>
+          {Array.from({ length: 3 }).map((_, i) => {
+            // Remaining tries fill from left; used tries fill to the right
+            const isRemaining = i < turnState.triesLeft;
+            const bg = isRemaining ? darkenColor(imageBgColor, 0.5) : imageBgColor;
+            return (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: '100%',
+                  marginRight: i !== 3 - 1 ? 2 : 0,
+                  background: bg,
+                  transition: 'background 0.3s',
+                  boxSizing: 'border-box'
+                }}
+              />
+            );
+          })}
         </div>
         <div style={{
           display: 'flex',

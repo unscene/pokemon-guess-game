@@ -24,6 +24,7 @@ interface GameState {
   guesses: any[];
   usedPokemonThisRound: string[];
   usedPokemonGlobal: string[];
+  gameMode: 'guess-pokemon' | 'evolution';
 }
 
 const app = express();
@@ -61,8 +62,8 @@ function getRandomPokemonChoices(
 
 // Start new game
 app.post('/game/start', (req: Request, res: Response) => {
-  const { players, rounds } = req.body;
-  if (!Array.isArray(players) || typeof rounds !== 'number') {
+  const { players, rounds, gameMode } = req.body;
+  if (!Array.isArray(players) || typeof rounds !== 'number' || !['guess-pokemon', 'evolution'].includes(gameMode)) {
     return res.status(400).json({ error: 'Invalid payload' });
   }
   gameState = {
@@ -79,6 +80,7 @@ app.post('/game/start', (req: Request, res: Response) => {
     guesses: [],
     usedPokemonThisRound: [], // (legacy, not needed)
     usedPokemonGlobal: [], // Track used Pokémon for the entire game
+    gameMode,
   };
   res.json({ success: true, gameState });
 });
@@ -91,9 +93,22 @@ app.get('/game/state', (req: Request, res: Response) => {
 
 // Get turn data (real logic)
 app.get('/game/turn', (req: Request, res: Response) => {
+  // LOGGING: Trace branching
+  console.log('--- /game/turn called ---');
+  if (!gameState) {
+    console.log('No gameState');
+  } else {
+    console.log('gameMode:', gameState.gameMode);
+    console.log('turnState:', gameState.turnState);
+    if (gameState.turnState) {
+      console.log('turnState.done:', gameState.turnState.done);
+    }
+    console.log('status:', gameState.status);
+  }
   if (!gameState) return res.status(404).json({ error: 'No game in progress' });
   // If game is over, indicate it
   if (gameState.status === 'finished') {
+    console.log('[BRANCH] Game finished');
     return res.json({
       gameOver: true,
       scores: gameState.scores,
@@ -102,44 +117,148 @@ app.get('/game/turn', (req: Request, res: Response) => {
     });
   }
   // If no turnState or previous turn is done, generate new
-  if (!gameState.turnState || gameState.turnState.done) {
-    // Only allow Pokémon that have not been used in the entire game
-    const result = getRandomPokemonChoices(gameState.usedPokemonGlobal);
-    if (!result) {
-      // No more unique Pokémon left, end game
-      gameState.status = 'finished';
-      return res.json({
-        gameOver: true,
-        scores: gameState.scores,
-        rounds: gameState.rounds,
-        players: gameState.players,
-        error: 'No more unique Pokémon left',
-      });
+  if (gameState.gameMode === 'evolution') {
+    console.log('[BRANCH] Evolution mode');
+    // Evolution mode: pick a Pokémon with evolvesTo, answer is the evolution
+    if (!gameState.turnState || gameState.turnState.done) {
+      // Only allow Pokémon that have not been used and have an evolution
+      const available = POKEMON_LIST.filter(
+        p => p.evolvesTo && !gameState!.usedPokemonGlobal.includes(p.name)
+      );
+      if (available.length === 0) {
+        console.log('No available Pokémon with evolutions left');
+        gameState.status = 'finished';
+        return res.json({
+          gameOver: true,
+          scores: gameState.scores,
+          rounds: gameState.rounds,
+          players: gameState.players,
+          error: 'No more unique Pokémon with evolutions left',
+        });
+      }
+      const answerIdx = Math.floor(Math.random() * available.length);
+      const basePokemon = available[answerIdx];
+      const evolvedPokemon = POKEMON_LIST.find(p => p.id === basePokemon.evolvesTo)!;
+
+      // Find the full evolutionary line for the evolvedPokemon
+      // 1. Go backwards to the first form
+      let lineForms: typeof POKEMON_LIST = [];
+      let cursor = basePokemon;
+      while (true) {
+        const prev = POKEMON_LIST.find(p => p.evolvesTo === cursor.id);
+        if (!prev) break;
+        cursor = prev;
+      }
+      // 2. Go forwards and collect all forms
+      let forward: Pokemon | undefined = cursor;
+      while (forward) {
+        lineForms.push(forward);
+        forward = forward.evolvesTo ? POKEMON_LIST.find(p => p.id === forward?.evolvesTo) : undefined;
+      }
+
+      // Detractors: other forms from the same line except the correct answer
+      const answerForm = evolvedPokemon;
+      const otherForms = lineForms.filter(p => p.id !== answerForm.id);
+      // Pick up to 2 detractors from otherForms
+      let detractors = otherForms.slice(0,2);
+      // If not enough, fill with random Pokémon from other lines (not in lineForms)
+      if (detractors.length < 2) {
+        const otherPokemonPool = POKEMON_LIST.filter(p => !lineForms.some(f => f.id === p.id));
+        while (detractors.length < 2 && otherPokemonPool.length > 0) {
+          const idx = Math.floor(Math.random() * otherPokemonPool.length);
+          detractors.push(otherPokemonPool.splice(idx, 1)[0]);
+        }
+      }
+      // Add the answer and one random Pokémon not in lineForms or detractors or answer
+      const notInChoices = POKEMON_LIST.filter(p => ![...lineForms, ...detractors, answerForm].some(f => f.id === p.id));
+      let randomOther = notInChoices.length > 0 ? notInChoices[Math.floor(Math.random() * notInChoices.length)] : null;
+      // Build choices
+      let choices = [answerForm, ...detractors];
+      if (randomOther) choices.push(randomOther);
+      // Ensure uniqueness and shuffle
+      choices = Array.from(new Set(choices.map(p => p.id))).map(id => POKEMON_LIST.find(p => p.id === id)!);
+      choices = choices.sort(() => Math.random() - 0.5);
+
+
+      gameState.turnState = {
+        pokemon: evolvedPokemon.name, // The correct answer is the evolved form
+        pokemonId: basePokemon.id,   // Still use basePokemon.id for the left image
+        choices: choices.map(p => p.name),
+        triesLeft: 3,
+        pointsThisTurn: 3,
+        correct: null,
+        done: false,
+      };
+
+      gameState.usedPokemonGlobal.push(basePokemon.name);
+      // Store evolvedPokemonId for answer checking
+      (gameState.turnState as any).evolvedPokemonId = evolvedPokemon.id;
     }
-    const { answer, choices } = result;
-    gameState.turnState = {
-      pokemon: answer.name,
-      pokemonId: answer.id,
-      choices: choices.map((p) => p.name),
-      triesLeft: 3,
-      pointsThisTurn: 3,
-      correct: null,
-      done: false,
-    };
-    // Track used Pokémon for the entire game
-    gameState.usedPokemonGlobal.push(answer.name);
-  }
-  res.json({
-    pokemon: gameState.turnState.pokemon,
-    imageUrl: getPokemonImageUrl(gameState.turnState.pokemonId),
-    choices: gameState.turnState.choices,
-    triesLeft: gameState.turnState.triesLeft,
-    currentPlayer: gameState.players[gameState.currentPlayerIndex],
-    currentRound: gameState.currentRound,
+    const evolvedPokemonId = (gameState.turnState as any).evolvedPokemonId || POKEMON_LIST.find(p => p.name === gameState?.turnState?.choices[0])?.id;
+
+    console.log('Returning evolution response:', {
+      pokemon: gameState.turnState.pokemon,
+      imageUrl: getPokemonImageUrl(gameState.turnState.pokemonId),
+      evolutionImageUrl: getPokemonImageUrl(evolvedPokemonId),
+      choices: gameState.turnState.choices,
+      triesLeft: gameState.turnState.triesLeft,
+      currentPlayer: gameState.players[gameState.currentPlayerIndex],
+      currentRound: gameState.currentRound,
+      totalRounds: gameState.rounds,
+      gameOver: false,
+    });
+    return res.json({
+      pokemon: gameState.turnState.pokemon,
+      imageUrl: getPokemonImageUrl(gameState.turnState.pokemonId),
+      evolutionImageUrl: getPokemonImageUrl(evolvedPokemonId),
+      choices: gameState.turnState.choices,
+      triesLeft: gameState.turnState.triesLeft,
+      currentPlayer: gameState.players[gameState.currentPlayerIndex],
+      currentRound: gameState.currentRound,
+      totalRounds: gameState.rounds,
+      gameOver: false,
+    });
+  } else {
+    // Classic mode
+    if (!gameState.turnState || gameState.turnState.done) {
+      // Only allow Pokémon that have not been used in the entire game
+      const result = getRandomPokemonChoices(gameState.usedPokemonGlobal);
+      if (!result) {
+        console.log('No more unique Pokémon left for classic mode');
+        // No more unique Pokémon left, end game
+        gameState.status = 'finished';
+        return res.json({
+          gameOver: true,
+          scores: gameState.scores,
+          rounds: gameState.rounds,
+          players: gameState.players,
+          error: 'No more unique Pokémon left',
+        });
+      }
+      const { answer, choices } = result;
+      gameState.turnState = {
+        pokemon: answer.name,
+        pokemonId: answer.id,
+        choices: choices.map((p) => p.name),
+        triesLeft: 3,
+        pointsThisTurn: 3,
+        correct: null,
+        done: false,
+      };
+      // Track used Pokémon for the entire game
+      gameState.usedPokemonGlobal.push(answer.name);
+    }
+    return res.json({
+      pokemon: gameState.turnState.pokemon,
+      imageUrl: getPokemonImageUrl(gameState.turnState.pokemonId),
+      choices: gameState.turnState.choices,
+      triesLeft: gameState.turnState.triesLeft,
+      currentPlayer: gameState.players[gameState.currentPlayerIndex],
+      currentRound: gameState.currentRound,
     totalRounds: gameState.rounds,
     gameOver: false,
   });
-});
+}});
 
 // Submit a guess (real logic)
 app.post('/game/guess', (req: Request, res: Response) => {
