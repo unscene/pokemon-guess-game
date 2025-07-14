@@ -93,22 +93,10 @@ app.get('/game/state', (req: Request, res: Response) => {
 
 // Get turn data (real logic)
 app.get('/game/turn', (req: Request, res: Response) => {
-  // LOGGING: Trace branching
-  console.log('--- /game/turn called ---');
-  if (!gameState) {
-    console.log('No gameState');
-  } else {
-    console.log('gameMode:', gameState.gameMode);
-    console.log('turnState:', gameState.turnState);
-    if (gameState.turnState) {
-      console.log('turnState.done:', gameState.turnState.done);
-    }
-    console.log('status:', gameState.status);
-  }
+
   if (!gameState) return res.status(404).json({ error: 'No game in progress' });
   // If game is over, indicate it
   if (gameState.status === 'finished') {
-    console.log('[BRANCH] Game finished');
     return res.json({
       gameOver: true,
       scores: gameState.scores,
@@ -118,7 +106,6 @@ app.get('/game/turn', (req: Request, res: Response) => {
   }
   // If no turnState or previous turn is done, generate new
   if (gameState.gameMode === 'evolution') {
-    console.log('[BRANCH] Evolution mode');
     // Evolution mode: pick a Pokémon with evolvesTo, answer is the evolution
     if (!gameState.turnState || gameState.turnState.done) {
       // Only allow Pokémon that have not been used and have an evolution
@@ -126,7 +113,6 @@ app.get('/game/turn', (req: Request, res: Response) => {
         p => p.evolvesTo && !gameState!.usedPokemonGlobal.includes(p.name)
       );
       if (available.length === 0) {
-        console.log('No available Pokémon with evolutions left');
         gameState.status = 'finished';
         return res.json({
           gameOver: true,
@@ -195,18 +181,6 @@ app.get('/game/turn', (req: Request, res: Response) => {
       (gameState.turnState as any).evolvedPokemonId = evolvedPokemon.id;
     }
     const evolvedPokemonId = (gameState.turnState as any).evolvedPokemonId || POKEMON_LIST.find(p => p.name === gameState?.turnState?.choices[0])?.id;
-
-    console.log('Returning evolution response:', {
-      pokemon: gameState.turnState.pokemon,
-      imageUrl: getPokemonImageUrl(gameState.turnState.pokemonId),
-      evolutionImageUrl: getPokemonImageUrl(evolvedPokemonId),
-      choices: gameState.turnState.choices,
-      triesLeft: gameState.turnState.triesLeft,
-      currentPlayer: gameState.players[gameState.currentPlayerIndex],
-      currentRound: gameState.currentRound,
-      totalRounds: gameState.rounds,
-      gameOver: false,
-    });
     return res.json({
       pokemon: gameState.turnState.pokemon,
       imageUrl: getPokemonImageUrl(gameState.turnState.pokemonId),
