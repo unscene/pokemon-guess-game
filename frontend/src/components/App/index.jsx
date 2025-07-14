@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getLightestColorFromImage } from './getLightestColorFromImage';
-import { darkenColor } from './colorUtils';
-import './buttonStyles.css';
-import SetupScreen from './components/SetupScreen';
+import { getLightestColorFromImage } from '../../getLightestColorFromImage';
+import { darkenColor } from '../../colorUtils';
+import '../../buttonStyles.css';
+import SetupScreen from '../../components/SetupScreen';
 
 
 function App() {
