@@ -2,7 +2,7 @@
   "name": "pokemon-guess-game-backend",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
+
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
