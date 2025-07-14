@@ -1,4 +1,5 @@
 import './global.css';
+import './stylex.css';
 import './press-start-2p.css';
 import './shake.css';
 import React from 'react';

@@ -2,64 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getLightestColorFromImage } from './getLightestColorFromImage';
 import { darkenColor } from './colorUtils';
 import './buttonStyles.css';
+import SetupScreen from './components/SetupScreen';
 
-function SetupScreen({ onStart }) {
-  const [players, setPlayers] = useState(['']);
-  const [rounds, setRounds] = useState(5);
-
-  const handlePlayerChange = (i, val) => {
-    const arr = [...players];
-    arr[i] = val;
-    setPlayers(arr);
-  };
-  const addPlayer = () => setPlayers([...players, '']);
-  const removePlayer = (i) => setPlayers(players.filter((_, idx) => idx !== i));
-
-  const canStart = players.every(p => p.trim()) && players.length > 1 && rounds > 0;
-
-  return (
-    <div style={{ padding: 32, maxWidth: 600, margin: 'auto', textAlign: 'center' }}>
-      <h1>Pokémon Guess Game</h1>
-      <h2>Enter Player Names</h2>
-      {players.map((p, i) => (
-        <div key={i} style={{ margin: 8 }}>
-          <input
-            style={{ fontSize: 24, width: 250, padding: 8 }}
-            value={p}
-            onChange={e => handlePlayerChange(i, e.target.value)}
-            placeholder={`Player ${i + 1}`}
-          />
-          {players.length > 2 && (
-            <button style={{ fontSize: 24, marginLeft: 8 }} onClick={() => removePlayer(i)}>
-              ✕
-            </button>
-          )}
-        </div>
-      ))}
-      <button className="game-btn" style={{ fontSize: 27 }} onClick={addPlayer}>+ Add Player</button>
-      <div style={{ margin: 16 }}>
-        <label style={{ fontSize: 24 }}>
-          Rounds:
-          <input
-            type="number"
-            min={1}
-            value={rounds}
-            onChange={e => setRounds(Number(e.target.value))}
-            style={{ fontSize: 24, width: 80, marginLeft: 8 }}
-          />
-        </label>
-      </div>
-      <button
-        className="game-btn"
-        style={{ fontSize: 32, padding: '16px 64px', marginTop: 24 }}
-        disabled={!canStart}
-        onClick={() => onStart(players, rounds)}
-      >
-        Start Game
-      </button>
-    </div>
-  );
-}
 
 function App() {
   // ...other hooks...
