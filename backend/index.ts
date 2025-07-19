@@ -137,30 +137,77 @@ app.get('/game/turn', (req: Request, res: Response) => {
       }
       // 2. Go forwards and collect all forms
       let forward: Pokemon | undefined = cursor;
-      while (forward) {
+      while (typeof forward !== 'undefined') {
         lineForms.push(forward);
-        forward = forward.evolvesTo ? POKEMON_LIST.find(p => p.id === forward?.evolvesTo) : undefined;
-      }
-
-      // Detractors: other forms from the same line except the correct answer
-      const answerForm = evolvedPokemon;
-      const otherForms = lineForms.filter(p => p.id !== answerForm.id);
-      // Pick up to 2 detractors from otherForms
-      let detractors = otherForms.slice(0,2);
-      // If not enough, fill with random Pokémon from other lines (not in lineForms)
-      if (detractors.length < 2) {
-        const otherPokemonPool = POKEMON_LIST.filter(p => !lineForms.some(f => f.id === p.id));
-        while (detractors.length < 2 && otherPokemonPool.length > 0) {
-          const idx = Math.floor(Math.random() * otherPokemonPool.length);
-          detractors.push(otherPokemonPool.splice(idx, 1)[0]);
+        if (typeof forward !== 'undefined') {
+          const evolvesTo: number | undefined = forward.evolvesTo;
+          if (typeof evolvesTo !== 'undefined') {
+            const next: Pokemon | undefined = POKEMON_LIST.find(p => p.id === evolvesTo);
+            forward = typeof next !== 'undefined' ? next : undefined;
+          } else {
+            forward = undefined;
+          }
+        } else {
+          forward = undefined;
         }
       }
-      // Add the answer and one random Pokémon not in lineForms or detractors or answer
-      const notInChoices = POKEMON_LIST.filter(p => ![...lineForms, ...detractors, answerForm].some(f => f.id === p.id));
-      let randomOther = notInChoices.length > 0 ? notInChoices[Math.floor(Math.random() * notInChoices.length)] : null;
-      // Build choices
-      let choices = [answerForm, ...detractors];
-      if (randomOther) choices.push(randomOther);
+
+      // Refactored: Pick two from correct line (base + evolved), two from another line
+      const answerForm = evolvedPokemon;
+      const baseForm = basePokemon;
+      // Find all evolution lines (arrays of forms)
+      const lines: Pokemon[][] = [];
+      const seen = new Set<number>();
+      for (const poke of POKEMON_LIST) {
+        if (seen.has(poke.id)) continue;
+        // Go to root
+        let root = poke;
+        while (true) {
+          const prev = POKEMON_LIST.find(p => p.evolvesTo === root.id);
+          if (!prev) break;
+          root = prev;
+        }
+        // Go forward and collect line
+        let forward: Pokemon | undefined = root;
+        const line: Pokemon[] = [];
+        while (typeof forward !== 'undefined') {
+          line.push(forward);
+          seen.add(forward.id);
+          if (typeof forward !== 'undefined' && typeof forward.evolvesTo !== 'undefined') {
+            const next = POKEMON_LIST.find(p => p.id === forward?.evolvesTo);
+            forward = typeof next !== 'undefined' ? next : undefined;
+          } else {
+            forward = undefined;
+          }
+        }
+        lines.push(line);
+      }
+      // Find the correct line and possible distractor lines
+      const correctLine = lines.find(line => line.some(p => p.id === baseForm.id))!;
+      const otherLines = lines.filter(line => !line.some(p => p.id === baseForm.id) && line.length >= 2);
+      // Pick a random other line with at least 2 forms
+      let distractorLine: Pokemon[] = [];
+      if (otherLines.length > 0) {
+        distractorLine = otherLines[Math.floor(Math.random() * otherLines.length)];
+      } else {
+        // fallback: pick any other Pokémon not in correctLine
+        distractorLine = POKEMON_LIST.filter(p => !correctLine.some(c => c.id === p.id));
+      }
+      // Pick two random from distractorLine
+      let distractors: Pokemon[] = [];
+      if (distractorLine.length >= 2) {
+        const idxs: number[] = [];
+        while (idxs.length < 2) {
+          const idx = Math.floor(Math.random() * distractorLine.length);
+          if (!idxs.includes(idx)) idxs.push(idx);
+        }
+        distractors = [distractorLine[idxs[0]], distractorLine[idxs[1]]];
+      } else {
+        // fallback: pick up to 2 unique
+        distractors = distractorLine.slice(0, 2);
+      }
+      // Choices: base, evolved, and 2 distractors
+      let choices = [baseForm, answerForm, ...distractors];
       // Ensure uniqueness and shuffle
       choices = Array.from(new Set(choices.map(p => p.id))).map(id => POKEMON_LIST.find(p => p.id === id)!);
       choices = choices.sort(() => Math.random() - 0.5);

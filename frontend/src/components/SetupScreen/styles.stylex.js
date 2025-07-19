@@ -28,8 +28,8 @@ export const styles = stylex.create({
   },
   playerInput: {
     fontSize: 24,
-    width: 250,
-    padding: 8,
+    width: 400,
+    padding: 24,
   },
   removeBtn: {
     fontSize: 24,
@@ -37,7 +37,7 @@ export const styles = stylex.create({
   },
   addPlayerBtn: {
     fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace",
-    fontSize: 36,
+    fontSize: 24,
     padding: '24px 64px',
     borderRadius: 0,
     background: '#eee',
@@ -47,6 +47,34 @@ export const styles = stylex.create({
     marginTop: 12,
     transition: 'background 0.15s, color 0.15s',
   },
+  modeLabel: {
+    textAlign: 'left',
+  },
+  optionLabel: {
+    width: 200,
+    display: 'inline-block'
+  },
+  modeSelect: {
+    fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace",
+    fontSize: 24,
+    marginLeft: 8,
+    padding: '16px 24px',
+    borderRadius: 0,
+    background: '#eee',
+    border: '7px solid #aaa',
+    color: '#000',
+    cursor: 'pointer',
+    transition: 'background 0.15s, color 0.15s',
+    width: 312,
+  },
+  optionsContainer: {
+    marginTop: 36,
+    marginBottom: 36,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
   roundsRow: {
     margin: 16,
     display: 'flex',
@@ -54,13 +82,20 @@ export const styles = stylex.create({
     justifyContent: 'center',
   },
   roundsLabel: {
-    fontSize: 24,
-    marginRight: 8,
+    textAlign: 'left',
   },
   roundsInput: {
+    fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace",
     fontSize: 24,
-    width: 80,
     marginLeft: 8,
+    padding: '16px 24px',
+    borderRadius: 0,
+    background: '#eee',
+    border: '7px solid #aaa',
+    color: '#000',
+    cursor: 'pointer',
+    transition: 'background 0.15s, color 0.15s',
+    width: 250,
   },
   startBtn: {
     fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace",

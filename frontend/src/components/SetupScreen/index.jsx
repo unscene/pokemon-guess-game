@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import { styles } from './styles.stylex';
+import useRandomPokemonBg from './useRandomPokemonBg';
 
 function SetupScreen({ onStart }) {
   const [players, setPlayers] = useState(['']);
@@ -17,8 +18,18 @@ function SetupScreen({ onStart }) {
 
   const canStart = players.every(p => p.trim()) && players.length > 1 && rounds > 0;
 
+  const bgColor = useRandomPokemonBg();
   return (
-    <div {...stylex.props(styles.container)}>
+    <div
+      {...stylex.props(styles.container)}
+      style={{
+        backgroundColor: bgColor,
+        backgroundImage: `url('src/pokeball-bg.svg')`,
+        backgroundRepeat: 'repeat',
+        backgroundSize: '32px 32px',
+        mixBlendMode: 'difference',
+      }}
+    >
       <h1 {...stylex.props(styles.heading)}>Pokémon Guess Game</h1>
       <h2 {...stylex.props(styles.subheading)}>Enter Player Names</h2>
       {players.map((p, i) => (
@@ -37,30 +48,32 @@ function SetupScreen({ onStart }) {
         </div>
       ))}
       <button className="game-btn" {...stylex.props(styles.addPlayerBtn)} onClick={addPlayer}>+ Add Player</button>
-      <div {...stylex.props(styles.roundsRow)}>
-        <label {...stylex.props(styles.roundsLabel)}>
-          Rounds:
-          <input
-            type="number"
-            min={1}
-            value={rounds}
-            onChange={e => setRounds(Number(e.target.value))}
-            {...stylex.props(styles.roundsInput)}
-          />
-        </label>
-      </div>
-      <div {...stylex.props(styles.roundsRow)}>
-        <label {...stylex.props(styles.roundsLabel)}>
-          Game Mode:
-          <select
-            value={gameMode}
-            onChange={e => setGameMode(e.target.value)}
-            style={{ marginLeft: 12, fontSize: 18 }}
-          >
-            <option value="guess-pokemon">Guess Pokémon</option>
-            <option value="evolution">Guess Evolution</option>
-          </select>
-        </label>
+      <div {...stylex.props(styles.optionsContainer)}>
+        <div {...stylex.props(styles.roundsRow)}>
+          <label {...stylex.props(styles.roundsLabel)}>
+            <span {...stylex.props(styles.optionLabel)}>Rounds:</span>
+            <input
+              type="number"
+              min={1}
+              value={rounds}
+              onChange={e => setRounds(Number(e.target.value))}
+              {...stylex.props(styles.roundsInput)}
+            />
+          </label>
+        </div>
+        <div {...stylex.props(styles.roundsRow)}>
+          <label {...stylex.props(styles.modeLabel)}>
+            <span {...stylex.props(styles.optionLabel)}>Game Mode:</span>
+            <select
+              value={gameMode}
+              onChange={e => setGameMode(e.target.value)}
+              {...stylex.props(styles.modeSelect)}
+            >
+              <option value="guess-pokemon">Pokémon</option>
+              <option value="evolution">Evolution</option>
+            </select>
+          </label>
+        </div>
       </div>
       <button
         className="game-btn"
@@ -71,6 +84,7 @@ function SetupScreen({ onStart }) {
         Start Game
       </button>
     </div>
+
   );
 }
 
