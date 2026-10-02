@@ -1,7 +1,90 @@
 body {
   font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  margin: 0;
+  overflow-x: hidden;
 }
 
 input, textarea {
   font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+}
+
+@media (max-width: 600px) {
+  .game-screen {
+    font-size: 16px !important;
+  }
+
+  .game-image-panel {
+    padding: 20px 0 !important;
+  }
+
+  .game-player-header {
+    width: calc(100% - 24px) !important;
+    flex-direction: column !important;
+    gap: 12px;
+    padding: 0 0 12px !important;
+  }
+
+  .game-player-label,
+  .game-round-label {
+    width: 100%;
+    font-size: clamp(12px, 4vw, 18px) !important;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    text-align: center !important;
+  }
+
+  .game-pokemon-image {
+    width: min(320px, calc(100vw - 32px)) !important;
+    height: auto !important;
+  }
+
+  .game-evolution-display {
+    width: 100%;
+    gap: 2vw !important;
+  }
+
+  .game-evolution-image,
+  .game-evolution-target {
+    width: 34vw !important;
+    height: 34vw !important;
+    max-width: 160px;
+    max-height: 160px;
+  }
+
+  .game-evolution-arrow {
+    font-size: clamp(18px, 6vw, 30px) !important;
+    margin: 0 !important;
+  }
+
+  .game-result-overlay {
+    width: calc(100vw - 24px);
+    min-width: 0 !important;
+    max-width: calc(100vw - 24px) !important;
+    gap: 16px !important;
+  }
+
+  .game-result-text {
+    font-size: clamp(12px, 4vw, 18px) !important;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .game-result-overlay .game-btn {
+    font-size: clamp(12px, 4vw, 18px) !important;
+    padding: 12px 16px !important;
+  }
+
+  .game-choices {
+    width: calc(100% - 24px) !important;
+    gap: 12px !important;
+  }
+
+  .game-choices .game-btn {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 12px 16px;
+    font-size: clamp(14px, 4vw, 20px);
+    overflow-wrap: anywhere;
+  }
 }
