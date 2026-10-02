@@ -3,109 +3,58 @@ import { getLightestColorFromImage } from '../../getLightestColorFromImage';
 import { darkenColor } from '../../colorUtils';
 import '../../buttonStyles.css';
 import SetupScreen from '../../components/SetupScreen';
+import { advanceGame, createGameState, submitGuess } from '../../gameLogic';
+import { clearGameState, loadGameState, saveGameState } from '../../gameStorage';
 
+function getInitialGameState() {
+  const isResetRequest =
+    window.location.pathname === '/reset' ||
+    new URLSearchParams(window.location.search).has('reset');
+
+  if (isResetRequest) {
+    clearGameState();
+    window.history.replaceState({}, document.title, '/');
+    return null;
+  }
+
+  return loadGameState();
+}
 
 function App() {
-  // ...other hooks...
   const [shakeKey, setShakeKey] = useState(0);
-  const [gameState, setGameState] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [turnState, setTurnState] = useState(null);
-  const [turnLoading, setTurnLoading] = useState(false);
-  
+  const [gameState, setGameState] = useState(getInitialGameState);
+  const turnState = gameState?.turnState;
   const [imageBgColor, setImageBgColor] = useState('#f0f0f0');
+
+  useEffect(() => {
+    saveGameState(gameState);
+  }, [gameState]);
+
   useEffect(() => {
     if (turnState && turnState.imageUrl) {
       getLightestColorFromImage(turnState.imageUrl).then(setImageBgColor);
     }
   }, [turnState && turnState.imageUrl]);
 
-
-  useEffect(() => {
-    fetch('/game/state')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setGameState(data); });
-  }, []);
-
-  // Fetch turn data from backend
-  const fetchTurn = () => {
-    setTurnLoading(true);
-    fetch('/game/turn')
-      .then(r => r.json())
-      .then(data => {
-        setTurnState({ ...data, correct: null });
-        setTurnLoading(false);
-      });
-  };
-  useEffect(() => {
-    fetchTurn();
-    // eslint-disable-next-line
-  }, [gameState]);
-
-
-
-  const [gameMode, setGameMode] = useState('guess-pokemon');
   const startGame = (players, rounds, mode) => {
-    setLoading(true);
-    setGameMode(mode);
-    fetch('/game/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ players, rounds, gameMode: mode })
-    })
-      .then(r => r.json())
-      .then(data => {
-        setGameState(data.gameState);
-        setLoading(false);
-      });
+    setGameState(createGameState(players, rounds, mode));
   };
-
-
-  if (loading) return <div style={{ fontSize: 32, textAlign: 'center', marginTop: 100 }}>Loading...</div>;
 
   if (!gameState) return <SetupScreen onStart={startGame} />;
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
-
   const handleGuess = (choice) => {
-    if (turnLoading || turnState.correct !== null) return;
-    setTurnLoading(true);
-    fetch('/game/guess', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guess: choice })
-    })
-      .then(r => r.json())
-      .then(data => {
-        setTurnState(ts => ({
-          ...ts,
-          ...data,
-          choices: data.choices || ts.choices, // always preserve choices from previous turnState
-          maxTries: data.maxTries || ts.maxTries // always preserve maxTries from previous turnState
-        }));
-        setTurnLoading(false);
-        // Trigger shake if guess was wrong and tries remain
-        if (!data.correct && data.triesLeft > 0) {
-          setShakeKey(k => k + 1);
-        }
-      });
+    if (turnState.correct !== null) return;
+    if (choice !== turnState.pokemon && turnState.triesLeft > 1) {
+      setShakeKey((key) => key + 1);
+    }
+    setGameState((state) => submitGuess(state, choice));
   };
 
   const nextTurn = () => {
-    // Advance to next player/round on backend, then refresh state
-    fetch('/game/next', { method: 'POST' })
-      .then(r => r.json())
-      .then(() => {
-        // Refetch game state and turn
-        fetch('/game/state')
-          .then(r => r.ok ? r.json() : null)
-          .then(data => { if (data) setGameState(data); });
-        fetchTurn();
-      });
+    setGameState((state) => advanceGame(state));
   };
-
-  if (!turnState) return <div style={{ fontSize: 32, textAlign: 'center', marginTop: 100 }}>Loading turn...</div>;
 
   // Game over screen
   if (turnState.gameOver) {
@@ -118,7 +67,7 @@ function App() {
             <li key={player} style={{ margin: 12 }}>{player}: {score}</li>
           ))}
         </ul>
-        <button className="game-btn" style={{ fontSize: 28, marginTop: 32 }} onClick={() => { setGameState(null); setTurnState(null); }}>New Game</button>
+        <button className="game-btn" style={{ fontSize: 28, marginTop: 32 }} onClick={() => setGameState(null)}>New Game</button>
       </div>
     );
   }
@@ -267,7 +216,7 @@ function App() {
               className="game-btn"
               style={{ opacity: turnState.correct !== null ? 0.5 : 1 }}
               onClick={() => handleGuess(choice)}
-              disabled={turnState.correct !== null || turnLoading}
+              disabled={turnState.correct !== null}
             >
               {choice}
             </button>
