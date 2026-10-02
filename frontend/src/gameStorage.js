@@ -6,21 +6,39 @@ export function loadGameState(storage) {
     const serializedState = browserStorage.getItem(STORAGE_KEY);
     if (!serializedState) return null;
 
-    const state = JSON.parse(serializedState);
+    let state;
+    try {
+      state = JSON.parse(serializedState);
+    } catch {
+      browserStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
     if (
+      !state ||
+      typeof state !== 'object' ||
+      Array.isArray(state) ||
       !Array.isArray(state.players) ||
+      state.players.length === 0 ||
       !state.players.every((player) => typeof player === 'string') ||
       !Number.isInteger(state.rounds) ||
       state.rounds < 1 ||
       !Number.isInteger(state.currentPlayerIndex) ||
       state.currentPlayerIndex < 0 ||
       state.currentPlayerIndex >= state.players.length ||
+      !Number.isInteger(state.currentRound) ||
       !state.scores ||
       typeof state.scores !== 'object' ||
+      Array.isArray(state.scores) ||
       !Array.isArray(state.usedPokemonGlobal) ||
       !['guess-pokemon', 'evolution'].includes(state.gameMode) ||
+      !['playing', 'finished'].includes(state.status) ||
       !state.turnState ||
-      typeof state.turnState !== 'object'
+      typeof state.turnState !== 'object' ||
+      (!state.turnState.gameOver &&
+        (!Array.isArray(state.turnState.choices) ||
+          typeof state.turnState.pokemon !== 'string' ||
+          typeof state.turnState.triesLeft !== 'number'))
     ) {
       browserStorage.removeItem(STORAGE_KEY);
       return null;
