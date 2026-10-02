@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { getLightestColorFromImage } from '../../getLightestColorFromImage';
 import { darkenColor } from '../../colorUtils';
 import '../../buttonStyles.css';
@@ -225,6 +226,7 @@ function App() {
           ))}
         </div>
       </>
+      <Analytics />
     </div>
   );
 }

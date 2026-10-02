@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "@stylexjs/stylex": "^0.9.3",
+    "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "^4.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
