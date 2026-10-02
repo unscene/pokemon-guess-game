@@ -4,12 +4,31 @@ import { darkenColor } from '../../colorUtils';
 import '../../buttonStyles.css';
 import SetupScreen from '../../components/SetupScreen';
 import { advanceGame, createGameState, submitGuess } from '../../gameLogic';
+import { clearGameState, loadGameState, saveGameState } from '../../gameStorage';
+
+function getInitialGameState() {
+  const isResetRequest =
+    window.location.pathname === '/reset' ||
+    new URLSearchParams(window.location.search).has('reset');
+
+  if (isResetRequest) {
+    clearGameState();
+    window.history.replaceState({}, document.title, '/');
+    return null;
+  }
+
+  return loadGameState();
+}
 
 function App() {
   const [shakeKey, setShakeKey] = useState(0);
-  const [gameState, setGameState] = useState(null);
+  const [gameState, setGameState] = useState(getInitialGameState);
   const turnState = gameState?.turnState;
   const [imageBgColor, setImageBgColor] = useState('#f0f0f0');
+
+  useEffect(() => {
+    saveGameState(gameState);
+  }, [gameState]);
 
   useEffect(() => {
     if (turnState && turnState.imageUrl) {
