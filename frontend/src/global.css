@@ -11,10 +11,16 @@ input, textarea {
 @media (max-width: 600px) {
   .game-screen {
     font-size: 16px !important;
+    margin-top: 0 !important;
   }
 
   .game-image-panel {
-    padding: 20px 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .game-tries-meter {
+    width: 100vw !important;
+    margin-bottom: 20px;
   }
 
   .game-player-header {

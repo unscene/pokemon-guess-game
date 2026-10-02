@@ -175,7 +175,7 @@ function App() {
             </div>
           )}
         </div>
-         <div className="game-choices" style={{
+         <div className="game-tries-meter" style={{
           width: '100vw',
           height: 18,
           background: imageBgColor,
@@ -192,7 +192,6 @@ function App() {
                 style={{
                   flex: 1,
                   height: '100%',
-                  marginRight: i !== 3 - 1 ? 2 : 0,
                   background: bg,
                   transition: 'background 0.3s',
                   boxSizing: 'border-box'
@@ -201,7 +200,7 @@ function App() {
             );
           })}
         </div>
-        <div style={{
+        <div className="game-choices" style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: 32,
