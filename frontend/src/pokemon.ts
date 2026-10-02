@@ -665,6 +665,6 @@ export const POKEMON_LIST: Pokemon[] = [
     { name: 'mew', id: 151 }
 ];
 
-export function getPokemonImageUrl(id: number): string {
+export function getPokemonImageUrl(id: number) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 }
