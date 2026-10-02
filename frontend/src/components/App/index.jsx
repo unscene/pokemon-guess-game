@@ -73,15 +73,15 @@ function App() {
   }
 
   return (
-    <div style={{ fontSize: 32, textAlign: 'center', marginTop: 20 }}>
+    <div className="game-screen" style={{ fontSize: 32, textAlign: 'center', marginTop: 20 }}>
       <>
-        <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', background: imageBgColor, padding: '40px 0 40px 0', transition: 'background 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="game-image-panel" style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', background: imageBgColor, padding: '40px 0 40px 0', transition: 'background 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           {/* Player Name inside colored box */}
-          <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px 12px 32px' }}>
-            <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 28, color: '#222', textAlign: 'left' }}>
+          <div className="game-player-header" style={{ width: '100%', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px 12px 32px' }}>
+            <span className="game-player-label" style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 28, color: '#222', textAlign: 'left' }}>
               Player: <b>{currentPlayer}</b> ({gameState?.scores?.[currentPlayer] ?? 0})
             </span>
-            <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 28, color: '#222', textAlign: 'right' }}>
+            <span className="game-round-label" style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 28, color: '#222', textAlign: 'right' }}>
               Round: {gameState.currentRound} / {gameState.rounds}
             </span>
           </div>
@@ -92,16 +92,17 @@ function App() {
               style={{ position: 'relative', display: 'inline-block' }}
               className="shake"
             >
-              <div style={{ position: 'relative', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
+              <div className="game-evolution-display" style={{ position: 'relative', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
                   {/* Base Pokémon */}
                   <img
                     key={shakeKey + '-base'}
                     src={turnState.imageUrl}
                     alt="base-pokemon"
+                    className="game-evolution-image"
                     style={{ width: 320, height: 320, imageRendering: 'pixelated', display: 'block', }}
                   />
                   {/* Arrow */}
-                  <span style={{
+                  <span className="game-evolution-arrow" style={{
                     fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace",
                     fontSize: 64,
                     userSelect: 'none',
@@ -115,11 +116,12 @@ function App() {
                     ▶
                   </span>
                   {/* Evolution silhouette */}
-                  <div style={{ position: 'relative', width: 320, height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="game-evolution-target" style={{ position: 'relative', width: 320, height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <img
                       key={shakeKey + '-evo'}
                       src={turnState.evolutionImageUrl}
                       alt="evolution-silhouette"
+                      className="game-evolution-image"
                       style={{
                         width: 320,
                         height: 320,
@@ -147,13 +149,14 @@ function App() {
                 key={shakeKey}
                 src={turnState.imageUrl}
                 alt="pokemon"
+                className="game-pokemon-image"
                 style={{ width: 320, height: 320, imageRendering: 'pixelated', display: 'block', margin: '0 auto' }}
               />
             </div>
           )}
           {turnState.correct === true && (
-            <div style={{ flexDirection: 'column', gap: 32, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2 }}>
-              <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 42, color: '#00ff00', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2 }}>
+            <div className="game-result-overlay" style={{ flexDirection: 'column', gap: 32, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2 }}>
+              <span className="game-result-text" style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 42, color: '#00ff00', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2 }}>
                 Correct!
               </span>
               <button onClick={nextTurn} className="game-btn" style={{ fontSize: 28, padding: '18px 32px', marginLeft: 0, border: '7px solid #00ff00', boxShadow: '2px 2px 0 #222' }}>
@@ -162,8 +165,8 @@ function App() {
             </div>
           )}
           {turnState.correct === false && (
-            <div style={{ flexDirection: 'column', gap: 32, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2, minWidth: 700, maxWidth: '90vw', justifyContent: 'center', background: 'rgba(255,255,255,0.01)' }}>
-              <span style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 38, color: '#ff2222', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2 }}>
+            <div className="game-result-overlay" style={{ flexDirection: 'column', gap: 32, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', zIndex: 2, minWidth: 700, maxWidth: '90vw', justifyContent: 'center', background: 'rgba(255,255,255,0.01)' }}>
+              <span className="game-result-text" style={{ fontFamily: "'Press Start 2P', 'Courier New', Courier, monospace", fontSize: 38, color: '#ff2222', textShadow: '2px 2px 0 #222, 0 0 8px #fff', letterSpacing: 2 }}>
                 Out of tries! The answer was {turnState.pokemon}
               </span>
               <button onClick={nextTurn} className="game-btn" style={{ fontSize: 28, padding: '18px 32px', marginLeft: 0, border: '7px solid #ff2222', boxShadow: '2px 2px 0 #222' }}>
@@ -172,7 +175,7 @@ function App() {
             </div>
           )}
         </div>
-         <div style={{
+         <div className="game-tries-meter" style={{
           width: '100vw',
           height: 18,
           background: imageBgColor,
@@ -189,7 +192,6 @@ function App() {
                 style={{
                   flex: 1,
                   height: '100%',
-                  marginRight: i !== 3 - 1 ? 2 : 0,
                   background: bg,
                   transition: 'background 0.3s',
                   boxSizing: 'border-box'
@@ -198,7 +200,7 @@ function App() {
             );
           })}
         </div>
-        <div style={{
+        <div className="game-choices" style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: 32,
